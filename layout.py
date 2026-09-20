@@ -21,7 +21,7 @@ import textwrap
 from renderer import RESET, THEMES, render, sgr
 
 # ============================ edit your content here ===========================
-DOMAIN = "aathi.vercel.app"          # shown in the footer hints; set to your real domain
+DOMAIN = "aathi-cli.vercel.app"         # shown in the footer hints; set to your real domain
 
 # (command shown after "$ ", [items])   item kinds: "name", "text", "kv"
 SECTIONS = [
