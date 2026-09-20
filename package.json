@@ -6,7 +6,7 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "build": "python layout.py --build-all"
+    "build:pages": "python layout.py --build-all"
   },
-  "engines": { "node": ">=18" }
+  "engines": { "node": "22.x" }
 }
