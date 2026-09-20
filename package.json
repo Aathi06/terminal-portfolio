@@ -1,0 +1,12 @@
+{
+  "name": "terminal-portfolio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A portfolio you read with curl",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "build": "python layout.py --build-all"
+  },
+  "engines": { "node": ">=18" }
+}

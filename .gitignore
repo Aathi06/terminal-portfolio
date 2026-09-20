@@ -1,0 +1,8 @@
+__pycache__/
+node_modules/
+.vercel/
+
+# The source artwork is only needed to rebuild the pages on your own machine.
+# The server serves dist/pages.json, so the original image doesn't need to be published.
+# Delete this line if you do want it in the repo.
+assets/
