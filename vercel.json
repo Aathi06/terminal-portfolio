@@ -1,3 +1,10 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/api" }]
+  "rewrites": [
+    { "source": "/", "destination": "/api/home" },
+    { "source": "/256", "destination": "/api/wide-256" },
+    { "source": "/compact", "destination": "/api/compact" },
+    { "source": "/compact-256", "destination": "/api/compact-256" },
+    { "source": "/healthz", "destination": "/api/health" },
+    { "source": "/(.*)", "destination": "/api/notfound" }
+  ]
 }
