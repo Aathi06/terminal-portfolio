@@ -1,5 +1,10 @@
 {
   "rewrites": [
-    { "source": "/:path*", "destination": "/api/route?path=/:path*" }
+    { "source": "/", "destination": "/api/route?path=/" },
+    { "source": "/256", "destination": "/api/route?path=/256" },
+    { "source": "/compact", "destination": "/api/route?path=/compact" },
+    { "source": "/compact-256", "destination": "/api/route?path=/compact-256" },
+    { "source": "/healthz", "destination": "/api/route?path=/healthz" },
+    { "source": "/(.*)", "destination": "/api/route?path=/__notfound" }
   ]
 }
