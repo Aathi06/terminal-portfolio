@@ -8,5 +8,7 @@
     "start": "node server.js",
     "build:pages": "python layout.py --build-all"
   },
-  "engines": { "node": "22.x" }
+  "engines": {
+    "node": "22.x"
+  }
 }
