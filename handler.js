@@ -83,13 +83,7 @@ function serve(req, res, key) {
 // Path-based router for the local / long-running server.
 function handle(req, res) {
 
-  console.log("===== HANDLE =====");
-  console.log("req.url =", req.url);
-
   const path = new URL(req.url, "http://localhost").pathname.replace(/\/+$/, "") || "/";
-
-   console.log("path =", path);
-
   if (path === "/healthz") return health(req, res);
   const key = ROUTES[path];
   return key ? serve(req, res, key) : notFound(req, res);
