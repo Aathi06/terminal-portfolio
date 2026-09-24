@@ -46,7 +46,7 @@ function methodAllowed(req, res) {
 
 function notFound(req, res) {
   if (!methodAllowed(req, res)) return;
-  send(req, res, 404, `Not found. Try:\n  curl ${hostOf(req)}\n`, { "Cache-Control": "no-store" });
+  send(req, res, 404, `Not found. Try:\n  curl ${hostOf(req)}\n ${req.url}  ${req.path} ${req.originalUrl}`, { "Cache-Control": "no-store" });
 }
 
 function health(req, res) {
