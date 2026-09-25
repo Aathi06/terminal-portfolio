@@ -1,6 +1,6 @@
 "use strict";
 
-const { handle } = require("../handler");
+// const { handle } = require("../handler");
 
 module.exports = (req, res) => {
   const debug = JSON.stringify(req.query);
