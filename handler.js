@@ -46,7 +46,7 @@ function methodAllowed(req, res) {
 
 function notFound(req, res) {
   if (!methodAllowed(req, res)) return;
-  send(req, res, 404, `Not found. Try:\n  curl ${hostOf(req)}\n ${req.url}`, { "Cache-Control": "no-store" });
+  send(req, res, 404, `Not found. Try:\n  curl ${hostOf(req)}\n`, { "Cache-Control": "no-store" });
 }
 
 function health(req, res) {
@@ -82,7 +82,6 @@ function serve(req, res, key) {
 
 // Path-based router for the local / long-running server.
 function handle(req, res) {
-
   const path = new URL(req.url, "http://localhost").pathname.replace(/\/+$/, "") || "/";
   if (path === "/healthz") return health(req, res);
   const key = ROUTES[path];
