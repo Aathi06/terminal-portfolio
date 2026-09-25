@@ -71,8 +71,9 @@ function serve(req, res, key) {
 
     return send(req, res, 200, pages[key], {
       Vary: "Accept",
-      // Let browsers cache 5 min and the host's CDN 1 h: fewer function runs, faster replies.
-      "Cache-Control": "public, max-age=300, s-maxage=3600",
+      // No caching while we're actively debugging routing: a cached response can outlive
+      // the deploy that was supposed to replace it, which is exactly what happened here.
+      "Cache-Control": "no-store",
     });
   } catch (err) {
     console.error(err);

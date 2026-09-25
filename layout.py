@@ -21,7 +21,7 @@ import textwrap
 from renderer import RESET, THEMES, render, sgr
 
 # ============================ edit your content here ===========================
-DOMAIN = "aathi-cli.vercel.app"         # shown in the footer hints; set to your real domain
+DOMAIN = "yourdomain.dev"          # shown in the footer hints; set to your real domain
 
 # (command shown after "$ ", [items])   item kinds: "name", "text", "kv"
 SECTIONS = [
@@ -139,12 +139,13 @@ def build(layout="side", colors="truecolor", theme="violet", image="assets/yuta.
 
     title = f" {HOST}: ~ "
     top = B("╭─") + P.seg((title, mix(a, b, 0.5), True))[1] + B("─" * (inner - 1 - len(title)) + "╮")
-    hints = f"tip: curl {DOMAIN}/256 (256 colours) or /compact (80 columns)"
-    foot = [
-        B("├") + B("─" * inner) + B("┤"),
-        f"{B('│')} {pad(P.seg((hints, DIM, False)), inner - 2)} {B('│')}",
-        B("╰") + B("─" * inner) + B("╯"),
-    ]
+    # Accept a pasted URL ("https://name.vercel.app/") and wrap the tip if the domain is long,
+    # so a long domain can never overflow the frame.
+    domain = DOMAIN.replace("https://", "").replace("http://", "").strip("/")
+    hints = wrap(f"tip: curl {domain}/256 (256 colours) or /compact (80 columns)", inner - 2)
+    foot = [B("├") + B("─" * inner) + B("┤")]
+    foot += [f"{B('│')} {pad(P.seg((h, DIM, False)), inner - 2)} {B('│')}" for h in hints]
+    foot.append(B("╰") + B("─" * inner) + B("╯"))
     return "\n".join([top] + body + foot) + "\n"
 
 
