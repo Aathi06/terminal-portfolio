@@ -1,18 +1,21 @@
 "use strict";
 /**
- * api/route.js — the ONLY Vercel function in this project.
+ * api/route.js — TEMPORARY DEBUG VERSION.
  *
- * vercel.json rewrites every request here and passes the original path explicitly
- * as a query string, e.g. /256 becomes /api/route?path=/256. We don't rely on
- * Vercel preserving req.url through the rewrite (that's what broke last time) —
- * we read the exact path back out of the query string ourselves, then hand it to
- * the same handle() that server.js uses locally, so routing logic exists in one place.
+ * Every request, no matter the path, gets back plain text showing exactly what
+ * this function received: the raw req.url, and the "path" query param that
+ * vercel.json's rewrite is supposed to set. No routing happens yet.
+ *
+ * Once we see this output for a few different URLs (/, /256, /compact), we'll
+ * know whether the rewrite is firing at all, and restore the real routing logic.
  */
-const { handle } = require("../handler");
-
 module.exports = (req, res) => {
   const u = new URL(req.url, "http://x");
-  const originalPath = u.searchParams.get("path") || "/";
-  req.url = originalPath; // handle() reads the path straight off req.url
-  return handle(req, res);
+  const body =
+    "req.url (raw, as this function received it):\n  " + JSON.stringify(req.url) + "\n\n" +
+    "req.method:\n  " + JSON.stringify(req.method) + "\n\n" +
+    "'path' query param (what the rewrite should have set):\n  " + JSON.stringify(u.searchParams.get("path")) + "\n\n" +
+    "all query params:\n  " + JSON.stringify(Object.fromEntries(u.searchParams)) + "\n";
+  res.writeHead(200, { "Content-Type": "text/plain; charset=utf-8", "Cache-Control": "no-store" });
+  res.end(body);
 };
