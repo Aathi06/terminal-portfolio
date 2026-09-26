@@ -21,7 +21,7 @@ import textwrap
 from renderer import RESET, THEMES, render, sgr
 
 # ============================ edit your content here ===========================
-DOMAIN = "yourdomain.dev"          # shown in the footer hints; set to your real domain
+FOOTER = "source: github.com/Aathi06/terminal-portfolio"   # shown at the bottom of the card
 
 # (command shown after "$ ", [items])   item kinds: "name", "text", "kv"
 SECTIONS = [
@@ -55,8 +55,10 @@ HOST = "aathi@krishnan"
 
 TEXT, DIM, GREEN = (205, 214, 244), (105, 110, 140), (158, 206, 106)
 
-# layout name -> (image width in columns, content column width in columns)
-LAYOUTS = {"side": (44, 53), "stack": (36, 74)}
+# Only one layout now: wide, side-by-side, truecolor. (The /256 and /compact
+# variants are gone — they were the piece fighting the Vercel deployment, and
+# they weren't the point of this project.)
+IMG_W, R = 44, 53
 
 
 def mix(a, b, t):
@@ -111,8 +113,9 @@ def pad(row, width):
     return s + " " * (width - n)
 
 
-def build(layout="side", colors="truecolor", theme="violet", image="assets/yuta.jpg"):
-    img_w, R = LAYOUTS[layout]
+def build(theme="violet", image="assets/yuta.jpg"):
+    img_w = IMG_W
+    colors = "truecolor"
     a, b = THEMES[theme]
     P = Painter(colors)
     border_rgb = mix(a, b, 0.5)
@@ -122,27 +125,17 @@ def build(layout="side", colors="truecolor", theme="violet", image="assets/yuta.
     art = [(img_w, line) for line in render(image, img_w, "braille", "chalk", colors, theme=theme)]
     text = content_lines(R, P, a, b)
 
-    if layout == "side":
-        inner = 1 + img_w + 3 + R + 1                     # space | image | " | " | text | space
-        h = max(len(art), len(text))
-        top_pad = (h - len(art)) // 2
-        art = [(img_w, " " * img_w)] * top_pad + art
-        art += [(img_w, " " * img_w)] * (h - len(art))
-        text += [(0, "")] * (h - len(text))
-        body = [f"{B('│')} {pad(x, img_w)} {B('│')} {pad(t, R)} {B('│')}" for x, t in zip(art, text)]
-    else:                                                 # stack: image on top, text below
-        inner = 1 + R + 1
-        left = (R - img_w) // 2
-        body = [f"{B('│')} {' ' * left}{pad(x, img_w)}{' ' * (R - img_w - left)} {B('│')}" for x in art]
-        body.append(B("├") + B("─" * inner) + B("┤"))
-        body += [f"{B('│')} {pad(t, R)} {B('│')}" for t in text]
+    inner = 1 + img_w + 3 + R + 1                         # space | image | " | " | text | space
+    h = max(len(art), len(text))
+    top_pad = (h - len(art)) // 2
+    art = [(img_w, " " * img_w)] * top_pad + art
+    art += [(img_w, " " * img_w)] * (h - len(art))
+    text += [(0, "")] * (h - len(text))
+    body = [f"{B('│')} {pad(x, img_w)} {B('│')} {pad(t, R)} {B('│')}" for x, t in zip(art, text)]
 
     title = f" {HOST}: ~ "
     top = B("╭─") + P.seg((title, mix(a, b, 0.5), True))[1] + B("─" * (inner - 1 - len(title)) + "╮")
-    # Accept a pasted URL ("https://name.vercel.app/") and wrap the tip if the domain is long,
-    # so a long domain can never overflow the frame.
-    domain = DOMAIN.replace("https://", "").replace("http://", "").strip("/")
-    hints = wrap(f"tip: curl {domain}/256 (256 colours) or /compact (80 columns)", inner - 2)
+    hints = wrap(FOOTER, inner - 2)  # wrapped so a long string can never overflow the frame
     foot = [B("├") + B("─" * inner) + B("┤")]
     foot += [f"{B('│')} {pad(P.seg((h, DIM, False)), inner - 2)} {B('│')}" for h in hints]
     foot.append(B("╰") + B("─" * inner) + B("╯"))
@@ -151,32 +144,26 @@ def build(layout="side", colors="truecolor", theme="violet", image="assets/yuta.
 
 def main():
     ap = argparse.ArgumentParser(description="Compose the terminal portfolio page.")
-    ap.add_argument("--layout", choices=list(LAYOUTS), default="side")
-    ap.add_argument("--colors", choices=["truecolor", "256"], default="truecolor")
     ap.add_argument("--theme", choices=list(THEMES), default="violet")
     ap.add_argument("--image", default="assets/yuta.jpg")
-    ap.add_argument("--build-all", action="store_true", help="write all variants into dist/")
+    ap.add_argument("--build", action="store_true", help="write dist/page.ans and dist/page.json")
     ap.add_argument("--out-dir", default="dist")
     a = ap.parse_args()
 
-    if a.build_all:
+    page = build(a.theme, a.image)
+
+    if a.build:
         os.makedirs(a.out_dir, exist_ok=True)
-        pages = {}
-        for layout in LAYOUTS:
-            for colors in ("truecolor", "256"):
-                key = f"{layout}-{colors}"
-                pages[key] = build(layout, colors, a.theme, a.image)
-                with open(os.path.join(a.out_dir, f"portfolio-{key}.ans"), "w", encoding="utf-8", newline="\n") as f:
-                    f.write(pages[key])
-                print(f"wrote portfolio-{key}.ans: {len(pages[key])} bytes", file=sys.stderr)
+        with open(os.path.join(a.out_dir, "page.ans"), "w", encoding="utf-8", newline="\n") as f:
+            f.write(page)
         # One JSON file the Node server can require(): no filesystem reads at runtime,
         # so the same code works on any host (including serverless ones).
-        with open(os.path.join(a.out_dir, "pages.json"), "w", encoding="utf-8", newline="\n") as f:
-            json.dump(pages, f, ensure_ascii=False)
-        print("wrote pages.json", file=sys.stderr)
+        with open(os.path.join(a.out_dir, "page.json"), "w", encoding="utf-8", newline="\n") as f:
+            json.dump({"page": page}, f, ensure_ascii=False)
+        print(f"wrote dist/page.ans and dist/page.json: {len(page)} bytes", file=sys.stderr)
     else:
         sys.stdout.reconfigure(encoding="utf-8")
-        sys.stdout.write(build(a.layout, a.colors, a.theme, a.image))
+        sys.stdout.write(page)
 
 
 if __name__ == "__main__":
