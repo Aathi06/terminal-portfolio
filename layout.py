@@ -116,7 +116,7 @@ def pad(row, width):
 def build(theme="violet", image="assets/yuta.jpg"):
     img_w = IMG_W
     colors = "truecolor"
-    a, b = THEMES[theme]
+    a, b = THEMES[theme][0], THEMES[theme][-1]  # first/last corner: works for 2- or 4-tuple themes
     P = Painter(colors)
     border_rgb = mix(a, b, 0.5)
     border_rgb = tuple(v * 0.55 for v in border_rgb)      # frame is quieter than the content

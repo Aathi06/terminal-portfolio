@@ -13,20 +13,34 @@ reset code, so the layout stage can put text next to it without misalignment.
 import argparse
 import sys
 
-from PIL import Image, ImageFilter
+from PIL import Image, ImageFilter, ImageOps
 
 RESET = "\x1b[0m"
 
 # The source panel is black-and-white, so ALL colour here is a choice, not something
-# recovered from the image. A theme is (top colour, bottom colour): ink fades from one
-# to the other down the picture, and brighter ink = stronger pen line.
+# recovered from the image. A theme is either:
+#   (top, bottom)                       -- one blend, top to bottom (the original style)
+#   (top_left, top_right, bot_left, bot_right) -- a 4-corner blend, varying left/right too
+# Ink strength always still controls brightness on top of whatever colour this picks.
 THEMES = {
-    "violet": ((122, 162, 247), (187, 154, 247)),   # blue -> violet (default)
-    "ice":    ((137, 220, 235), (205, 214, 244)),   # cyan -> soft white
-    "ember":  ((255, 158, 100), (247, 118, 142)),   # orange -> rose
-    "matrix": ((120, 220, 120), (190, 240, 150)),   # green
-    "mono":   ((170, 170, 178), (235, 235, 240)),   # plain grey, closest to the original
+    "violet":  ((122, 162, 247), (187, 154, 247)),   # blue -> violet
+    "ice":     ((137, 220, 235), (205, 214, 244)),   # cyan -> soft white
+    "ember":   ((255, 158, 100), (247, 118, 142)),   # orange -> rose
+    "matrix":  ((120, 220, 120), (190, 240, 150)),   # green
+    "mono":    ((170, 170, 178), (235, 235, 240)),   # plain grey, closest to the original
+    # 4-corner themes: genuinely multicoloured, blending across both axes.
+    "aurora":  ((110, 231, 183), (99, 179, 237), (168, 129, 244), (247, 118, 142)),   # teal / blue / violet / rose
+    "sunset":  ((255, 190, 110), (247, 118, 142), (187, 134, 252), (99, 122, 247)),   # amber / rose / violet / indigo
+    "citrus":  ((240, 230, 120), (150, 220, 130), (255, 160, 90),  (240, 90, 120)),   # yellow / green / orange / red
 }
+
+
+def corners(tint):
+    """Normalize a theme to 4 corners: (top_left, top_right, bot_left, bot_right)."""
+    if len(tint) == 2:
+        top, bottom = tint
+        return top, top, bottom, bottom
+    return tint
 # "paper" style colours (dark ink on a light card, like the original panel).
 PAPER, INK = (236, 236, 242), (26, 27, 38)
 
@@ -81,7 +95,12 @@ def emit_row(cells, colors):
 
 # ----------------------------------------------------------------- image ---
 def load_image(path, crop=True):
-    img = Image.open(path).convert("L")
+    img = Image.open(path)
+    # Some editors (Windows Photos among them) flip/rotate by writing an EXIF
+    # orientation tag rather than actually transposing the pixels. Without this,
+    # we'd read the untouched pixel data and the flip would silently do nothing.
+    img = ImageOps.exif_transpose(img)
+    img = img.convert("L")
     if crop:                                          # trim empty white margins
         bbox = img.point(lambda v: 255 if v < 200 else 0).getbbox()
         if bbox:
@@ -109,8 +128,11 @@ def ink_grid(img, w, h, thicken):
     return strength
 
 
-def ink_color(s, y_frac, tint):
-    base = lerp(tint[0], tint[1], y_frac)
+def ink_color(s, x_frac, y_frac, tint):
+    tl, tr, bl, br = corners(tint)
+    top = lerp(tl, tr, x_frac)
+    bottom = lerp(bl, br, x_frac)
+    base = lerp(top, bottom, y_frac)
     k = 0.35 + 0.65 * s                               # stronger ink -> brighter
     return tuple(min(255, v * k) for v in base)
 
@@ -127,7 +149,7 @@ def render_half(img, width, style, colors, thicken=0.15, tint=THEMES["violet"]):
         s = strength(x, y)
         if style == "paper":
             return lerp(PAPER, INK, s)
-        return None if s < 0.10 else ink_color(s, y / ph, tint)    # chalk: paper is transparent
+        return None if s < 0.10 else ink_color(s, x / width, y / ph, tint)    # chalk: paper is transparent
 
     rows = []
     for y in range(0, ph, 2):
@@ -169,7 +191,7 @@ def render_braille(img, width, colors, thicken=0.10, threshold=0.33, tint=THEMES
             if mask == 0:
                 cells.append((" ", None, None))
             else:
-                cells.append((chr(0x2800 + mask), ink_color(total / n, cy / dh, tint), None))
+                cells.append((chr(0x2800 + mask), ink_color(total / n, cx / dw, cy / dh, tint), None))
         rows.append(emit_row(cells, colors))
     return rows
 
