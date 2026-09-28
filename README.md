@@ -114,8 +114,4 @@ architecture, the renderer, the streaming server, and a lot of debugging
 rounds to isolate). I came up with the concept, picked the content and image,
 and tested and deployed it.
 
-Character art: Yuta Okkotsu from *Jujutsu Kaisen* by Gege Akutami. Unofficial
-fan work, not affiliated with or endorsed by the creator or publisher. Source
-image isn't included in this repo.
-
 Made by [Aathi Krishnan M](https://github.com/Aathi06).
